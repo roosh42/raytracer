@@ -9,6 +9,6 @@ include_directories("/usr/local/include/opencv4")
 link_directories("/usr/local/lib")
 
 
-add_executable(tracer main.cpp)
+add_executable(tracer main.cpp Point.cpp Direction.cpp)
 target_link_libraries(tracer opencv_photo opencv_imgcodecs opencv_core)
 
