@@ -5,6 +5,12 @@
 #include "Point.hpp"
 #include "Direction.hpp"
 
+using std::cout;
+using std::endl;
+using std::sqrt;
+using std::optional;
+using std::nullopt;
+
 class Ray {
 public:
     Point start;
@@ -22,7 +28,7 @@ public:
     Point center;
     double radius;
 
-    Point intersect(const Ray& ray) const {
+    optional<Point> intersect(const Ray& ray) const {
         Point dir_p = Point(ray.dir);
         Point diff = ray.start - center;
         double a = dir_p * dir_p;
@@ -30,11 +36,15 @@ public:
         double c = diff * diff - radius * radius;
         double discriminant = b*b - 4*a*c;
         if (discriminant < 0) {
-            return Point{0, 0, 0};
+            return nullopt;
         }
         double t1 = (-b + sqrt(discriminant)) / (2*a);
         double t2 = (-b - sqrt(discriminant)) / (2*a);
-        double t = std::min(t1, t2);
+        double t = t1 < 0 ? t2 : (t2 < 0 ? t1 : (t1 < t2 ? t1 : t2));
+        if (t < 0) {
+            return nullopt;
+        }
+        
         return ray.atT(t);
     }
 };
@@ -62,14 +72,23 @@ int main() {
         {{255, 255, 0}, {255, 0, 255}, {0, 255, 255}},
         {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}
     };
-    CCD ccd{1, 1, 1, 3, 3};
+    CCD ccd{1, 1, 1, 20, 20};
     Sphere sphere{Point{0, 0, -10}, 4};
-    Point p = ccd.get(1, 1);
-    Ray ray{p, Point{0, 0, 0}};
-    Point contact = sphere.intersect(ray);
-    std::cout << contact.x << " " << contact.y << " " << contact.z << std::endl;
+    for (int r = 0; r < ccd.rows; r++) {
+        cout << endl;
+        for (int c = 0; c < ccd.columns; c++) {
+            Point p = ccd.get(r, c);
+            Ray ray{p, Point{0, 0, 0}};
+            optional<Point> contact = sphere.intersect(ray);
+            if (!contact.has_value()) {
+                cout << "  ";
+            } else {
+                cout << "XX";
+            }
+        }
+    }
+    cout << endl;
 
-    
     // Create a Mat object from the RGB data
     cv::Mat image(3, 3, CV_8UC3, rgbData);
 
