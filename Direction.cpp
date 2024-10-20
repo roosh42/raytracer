@@ -1,4 +1,5 @@
 #include "Direction.hpp"
+#include "Point.hpp"
 
     Direction::Direction(Point source, Point destination) {
         Point diff = destination - source;

@@ -1,5 +1,6 @@
 #pragma once
-// #include "Direction.hpp"
+
+class Direction;
 
 class Point {
 public:
@@ -9,8 +10,11 @@ public:
 
     Point(double _x, double _y, double _z);
     Point operator-(const Point& p) const;
+    Point operator+(const Point& p) const;
+    double operator*(const Point& p) const;
 
-//    explicit Point(Direction dir);
+
+    explicit Point(Direction dir);
 
     friend Point operator*(double scalar, const Point& point);
 };

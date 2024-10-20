@@ -1,9 +1,10 @@
 #include <opencv2/opencv.hpp>
+#include <optional>
+#include <iostream>
 
 #include "Point.hpp"
 #include "Direction.hpp"
 
-#ifdef COMMENT
 class Ray {
 public:
     Point start;
@@ -11,7 +12,7 @@ public:
 
     Ray(Point s, Point other): start{s}, dir{s, other} {}
 
-    Point atT(double t) {
+    Point atT(double t) const{
         return start + (t * Point(dir));
     }
 };
@@ -21,25 +22,25 @@ public:
     Point center;
     double radius;
 
-    optional<Point> intersect(Ray ray) {
-        double c = dot(ray.start, ray.start) - radius;
-        double b = 2 * dot(ray.start, ray.dir);
-        double a = dot(ray.dir, ray.dir);
+    Point intersect(const Ray& ray) const {
+        Point dir_p = Point(ray.dir);
+        Point diff = ray.start - center;
+        double a = dir_p * dir_p;
+        double b = 2 * (diff * dir_p);
+        double c = diff * diff - radius * radius;
         double discriminant = b*b - 4*a*c;
-        double t0 = (-b + sqrt(discriminant)) / (2*a);
-        double t1 = (-b - sqrt(discriminant)) / (2*a);
-        double t = t0 < 0 ? t1 : (t1 < 0 ? t0 : (t1 < t0 ? t1 : t0));
-        if (t < 0) {
-            return nullopt;
+        if (discriminant < 0) {
+            return Point{0, 0, 0};
         }
-
-        Point contact = ray.atT(t);
-
-        return contact;
+        double t1 = (-b + sqrt(discriminant)) / (2*a);
+        double t2 = (-b - sqrt(discriminant)) / (2*a);
+        double t = std::min(t1, t2);
+        return ray.atT(t);
     }
 };
 
 class CCD {
+public:
     double x_size;
     double y_size;
     double z_location;
@@ -47,12 +48,12 @@ class CCD {
     int columns;
 
     Point get(int r, int c) {
-        double x = (-x_size*0.5) + ((x_size / rows) * r);
-        double y = (y_size*0.5) - ((y_size / columns) * c);
-        return Point{x, y, z_location};
+        double x = (-x_size*0.5) + ((x_size / rows) * (r+0.5));
+        double y = (y_size*0.5) - ((y_size / columns) * (c+0.5));
+        Point pixel_center = Point{x, y, z_location};
+        return pixel_center;
     }
 };
-#endif  // COMMENT
 
 int main() {
     // Create an array of RGB values (assuming a 3x3 image)
@@ -61,14 +62,19 @@ int main() {
         {{255, 255, 0}, {255, 0, 255}, {0, 255, 255}},
         {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}
     };
+    CCD ccd{1, 1, 1, 3, 3};
+    Sphere sphere{Point{0, 0, -10}, 4};
+    Point p = ccd.get(1, 1);
+    Ray ray{p, Point{0, 0, 0}};
+    Point contact = sphere.intersect(ray);
+    std::cout << contact.x << " " << contact.y << " " << contact.z << std::endl;
 
-    Point p(1, 2, 3);
     
-    // // Create a Mat object from the RGB data
-    // cv::Mat image(3, 3, cv::CV_8UC3, rgbData);
+    // Create a Mat object from the RGB data
+    cv::Mat image(3, 3, CV_8UC3, rgbData);
 
-    // // Write the image to a BMP file
-    // cv::imwrite("output.bmp", image);
+    // Write the image to a BMP file
+//    cv::imwrite("output.bmp", image);
 
     return 0;
 }

@@ -1,5 +1,6 @@
 #pragma once
-#include "Point.hpp"
+
+class Point;
 
 class Direction {
 public:
